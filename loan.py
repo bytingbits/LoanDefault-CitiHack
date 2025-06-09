@@ -198,11 +198,11 @@ def predict_loan_default(CreditScore, DTIRatio, Income, LoanAmount, **kwargs):
         "\n".join(recs)
     )
 
-# api_key = "AIzaSyDZmJUyg-v6urbgROSTfdPhPtyQ7iI4gqw"
+
 import requests
 
 def refine_paragraph_with_gemini(user_text):
-    api_key = "AIzaSyDZmJUyg-v6urbgROSTfdPhPtyQ7iI4gqw"
+    api_key = "<YOUR API KEY HERE>"
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent"
     headers = {"Content-Type": "application/json"}
     
