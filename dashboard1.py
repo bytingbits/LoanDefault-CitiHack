@@ -197,4 +197,4 @@ with gr.Blocks(title="Loan Data Analysis Dashboard", theme=gr.themes.Soft()) as 
     dashboard.load(populate_dashboard, [], all_components)
 
 # Launch the dashboard
-#dashboard.launch()
+# dashboard.launch()

@@ -287,5 +287,5 @@ iface_nl = gr.Interface(
     description="Describe your profile in natural language to get a prediction and see where you fall among risk clusters."
 )
 iface = gr.TabbedInterface([iface_structured, iface_nl], ["Structured Input", "Natural Language Input"])
-#iface.launch()
-loan_page=iface
+iface.launch()
+# loan_page=iface
