@@ -256,6 +256,10 @@ def extract_features_from_text(profile_text):
 
     # You can add more feature extractions here if needed, e.g., Age, NumberOfLoans, Mortgage, Dependents, etc.
 
+    print("Mapped features from NLP extraction:", features)
+    # Display mapped features in Gradio interface by returning them
+    # We'll return them as a pretty string for display
+    mapped_features_str = "\n".join(f"{k}: {v}" for k, v in features.items())
     return features
 
     # Define candidate labels for extraction
@@ -285,6 +289,8 @@ def extract_features_from_text(profile_text):
 def predict_from_text(profile_text):
     global pca
     features = extract_features_from_text(profile_text)
+
+    mapped_features_str = "\n".join(f"{k}: {v}" for k, v in features.items())
     
     # Get the prediction details
     prediction, probability, risk_segment, recommendations = predict_loan_default(
@@ -305,7 +311,7 @@ def predict_from_text(profile_text):
     # Generate the PCA plot with user highlighted
     fig = plot_user_cluster_pca(X_cluster, kmeans, user_input, scaler, pca)
     
-    return prediction, probability, risk_segment, recommendations, fig
+    return mapped_features_str, prediction, probability, risk_segment, recommendations, fig
 
 
 # Add a new tab for natural language profile input
@@ -313,6 +319,7 @@ iface_nl = gr.Interface(
     fn=predict_from_text,
     inputs=gr.Textbox(label="Describe your profile (e.g., 'I earn 5LPA, 25 years old, 2 loans, no co-signer...')"),
     outputs=[
+        gr.Textbox(label="Extracted Feature Mapping"),
         gr.Textbox(label="Prediction"),
         gr.Textbox(label="Probability"),
         gr.Textbox(label="Risk Segment"),
