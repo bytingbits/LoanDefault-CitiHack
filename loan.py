@@ -253,6 +253,8 @@ def predict_from_text(profile_text):
     fig = plot_user_cluster_pca(X_cluster, kmeans, user_input, scaler, pca)
     return mapped_features_str, prediction, probability, risk_segment, recommendations, fig
 
+
+
 iface_structured = gr.Interface(
     fn=predict_loan_default,
     inputs=[
@@ -285,4 +287,5 @@ iface_nl = gr.Interface(
     description="Describe your profile in natural language to get a prediction and see where you fall among risk clusters."
 )
 iface = gr.TabbedInterface([iface_structured, iface_nl], ["Structured Input", "Natural Language Input"])
-iface.launch()
+#iface.launch()
+loan_page=iface
