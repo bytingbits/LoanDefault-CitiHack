@@ -11,6 +11,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 import re
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+import requests
 
 def plot_results(y_test, y_pred, df_clean):
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
@@ -197,9 +198,45 @@ def predict_loan_default(CreditScore, DTIRatio, Income, LoanAmount, **kwargs):
         "\n".join(recs)
     )
 
+# api_key = "AIzaSyDZmJUyg-v6urbgROSTfdPhPtyQ7iI4gqw"
+import requests
+
+def refine_paragraph_with_gemini(user_text):
+    api_key = "AIzaSyDZmJUyg-v6urbgROSTfdPhPtyQ7iI4gqw"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent"
+    headers = {"Content-Type": "application/json"}
+    
+    print("Refining paragraph with Gemini API...")
+    print(user_text)
+    
+    prompt = (
+        "Rewrite the following paragraph to clearly and concisely describe the applicant's financial profile for a loan application. "
+        "Keep all relevant details:\n\n" + user_text
+    )
+    
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+    params = {"key": api_key}
+    
+    response = requests.post(url, headers=headers, params=params, json=payload)
+    
+    print("Response status code:", response.status_code)
+    print("Response content:", response.content)
+    
+    if response.ok:
+        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    else:
+        return user_text  # fallback to original
+
+    
 def predict_from_text(profile_text):
+    # Refine the paragraph first
+    refined_text = refine_paragraph_with_gemini(profile_text)
+    print("Refined Text:", refined_text)
     global pca
-    features = extract_features_from_text(profile_text)
+    # features = extract_features_from_text(profile_text)
+    features = extract_features_from_text(refined_text)
     mapped_features_str = "\n".join(f"{k}: {v}" for k, v in features.items())
     prediction, probability, risk_segment, recommendations = predict_loan_default(
         features["CreditScore"],
