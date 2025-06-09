@@ -4,9 +4,10 @@ from dashboard1 import dashboard
 
 def main():
     with gr.Blocks(title="Loan Management System") as app:
-        dashboard_unlocked = gr.State(value=False)
-
-        with gr.Tabs():
+        # Single source of truth for authentication state
+        is_authenticated = gr.State(value=False)
+        
+        with gr.Tabs() as tabs:
             # --------- HOME TAB ----------
             with gr.TabItem("Home"):
                 gr.Markdown("""
@@ -23,16 +24,17 @@ def main():
                     access_button = gr.Button("Submit")
                     access_output = gr.Markdown()
 
-                def check_passkey(passkey):
+                def authenticate(passkey, current_state):
                     if passkey == "1234":
                         return True, "✅ Access granted! Switch to the Dashboard tab."
                     else:
-                        return False, "❌ Invalid passkey. Try again."
+                        return current_state, "❌ Invalid passkey. Try again."
 
+                # Connect login button to auth state
                 access_button.click(
-                    fn=check_passkey,
-                    inputs=passkey_input,
-                    outputs=[dashboard_unlocked, access_output]
+                    fn=authenticate,
+                    inputs=[passkey_input, is_authenticated],
+                    outputs=[is_authenticated, access_output]
                 )
 
             # --------- LOAN TAB ----------
@@ -40,23 +42,46 @@ def main():
                 loan_page.render()
 
             # --------- DASHBOARD TAB ----------
-            with gr.TabItem("Dashboard"):
-                with gr.Blocks() as dashboard_tab:
-                    lock_msg = gr.Markdown("🔒 Access Denied. Please enter the passkey on the Home tab.")
-                    with gr.Column(visible=False) as dashboard_content:
-                        dashboard.render()
-
-                    def unlock_dashboard(allowed):
-                        if allowed:
-                            return gr.update(visible=False), gr.update(visible=True)
-                        else:
-                            return gr.update(visible=True), gr.update(visible=False)
-
-                    dashboard_tab.load(
-                        fn=unlock_dashboard,
-                        inputs=[dashboard_unlocked],
-                        outputs=[lock_msg, dashboard_content]
+            with gr.TabItem("Dashboard") as dashboard_tab:
+                # Container for conditional content
+                with gr.Group():
+                    # Auth required message - shown when not authenticated
+                    auth_message = gr.Markdown(
+                        "🔒 Access Denied. Please enter the passkey on the Home tab.",
+                        visible=True
                     )
+                    
+                    # Dashboard content - hidden initially
+                    with gr.Group(visible=False) as dashboard_content:
+                        dashboard.render()
+                
+                # Update dashboard visibility whenever the tab is selected
+                def update_dashboard_view(auth_state):
+                    if auth_state:
+                        return gr.update(visible=False), gr.update(visible=True)
+                    else:
+                        return gr.update(visible=True), gr.update(visible=False)
+                
+                # Check auth state when tab is loaded
+                dashboard_tab.select(
+                    fn=update_dashboard_view,
+                    inputs=[is_authenticated],
+                    outputs=[auth_message, dashboard_content]
+                )
+                
+            # --------- LOGOUT TAB ----------
+            with gr.TabItem("Logout"):
+                logout_button = gr.Button("Logout")
+                logout_message = gr.Markdown("")
+                
+                def perform_logout():
+                    return False, "You have been logged out."
+                
+                logout_button.click(
+                    fn=perform_logout,
+                    inputs=[],
+                    outputs=[is_authenticated, logout_message]
+                )
 
     app.launch()
 
