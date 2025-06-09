@@ -5,13 +5,13 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-import gradio as gr
 import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay
 import re
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import requests
+import streamlit as st
 
 def plot_results(y_test, y_pred, df_clean):
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
@@ -253,39 +253,208 @@ def predict_from_text(profile_text):
     fig = plot_user_cluster_pca(X_cluster, kmeans, user_input, scaler, pca)
     return mapped_features_str, prediction, probability, risk_segment, recommendations, fig
 
+def streamlit_loan_page():
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@400;500&display=swap');
+        html, body, .main, .stApp {
+            font-family: 'Roboto', sans-serif !important;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+            color: #222 !important;
+        }
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            z-index: 9999;
+            background: #fff;
+            box-shadow: 0 2px 16px #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0.5em 2em;
+            height: 64px;
+        }
+        .nav-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            margin-right: 1.2em;
+            box-shadow: 0 0 8px #e0e0e0;
+        }
+        .nav-link {
+            color: #1b5e20 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-right: 2.2em;
+            text-decoration: none;
+            transition: color 0.2s, border-bottom 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover {
+            color: #ff9800 !important;
+            border-bottom: 2px solid #ff9800;
+        }
+        .nav-active {
+            color: #ff9800 !important;
+            border-bottom: 2px solid #ff9800;
+        }
+        .stApp { padding-top: 80px !important; }
+        .custom-header {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #1b5e20;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5em;
+        }
+        .custom-subheader {
+            font-size: 1.15rem;
+            color: #ff9800;
+            font-weight: 600;
+            margin-bottom: 1em;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        .loan-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 0 16px #e0e0e0;
+            border-radius: 18px;
+            padding: 2em 2em 1.5em 2em;
+            margin-bottom: 2em;
+            color: #222;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stButton>button {
+            background: linear-gradient(90deg, #43a047 0%, #ff9800 100%);
+            color: #fff !important;
+            font-size: 1.1rem !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: bold !important;
+            border-radius: 12px !important;
+            padding: 0.9em 2.2em !important;
+            margin: 1em 0 1em 0 !important;
+            box-shadow: 0 0 12px #ff980044;
+            border: none !important;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .stButton>button:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 24px #43a04744, 0 8px 32px #ff980044;
+        }
+        .stTextInput>div>div>input, .stNumberInput>div>div>input {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1.5px solid #43a047;
+            color: #222 !important;
+            font-size: 1.1rem;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stTextArea>div>textarea {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1.5px solid #ff9800;
+            color: #222 !important;
+            font-size: 1.1rem;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stMarkdown, .stTitle, .stSubheader {
+            color: #1b5e20;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        .stCodeBlock {
+            background: #f8fafc !important;
+            color: #43a047 !important;
+        }
+        .stPlotlyChart, .stPyplot {
+            background: #fff !important;
+            border-radius: 16px;
+            box-shadow: 0 0 16px #e0e0e0;
+            padding: 1.7em;
+        }
+        .recommend-box {
+            background: linear-gradient(90deg, #e8f5e9 0%, #fffde7 100%);
+            border-left: 7px solid #43a047;
+            padding: 1.2em 2em;
+            margin: 1.5em 0;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            color: #222;
+            box-shadow: 0 2px 12px #ff980044;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .recommend-box-orange {
+            border-left: 7px solid #ff9800;
+        }
+        .branding-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 1em;
+            box-shadow: 0 0 8px #e0e0e0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
+    st.markdown('''
+        <div class="top-navbar">
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="nav-logo" alt="Loan Brand Logo">
+            <a class="nav-link" href="/" target="_self">Home</a>
+            <a class="nav-link nav-active" href="#" target="_self">Loan Prediction</a>
+            <a class="nav-link" href="/dashboard1" target="_self">Dashboard</a>
+        </div>
+    ''', unsafe_allow_html=True)
 
-iface_structured = gr.Interface(
-    fn=predict_loan_default,
-    inputs=[
-        gr.Number(label="Credit Score"),
-        gr.Number(label="DTI Ratio"),
-        gr.Number(label="Income"),
-        gr.Number(label="Loan Amount")
-    ],
-    outputs=[
-        gr.Textbox(label="Prediction"),
-        gr.Textbox(label="Probability"),
-        gr.Textbox(label="Risk Segment"),
-        gr.Textbox(label="Recommendations")
-    ],
-    title="Loan Default Prediction",
-    description="Enter your details to get a loan default prediction, risk segment, and recommendations."
-)
-iface_nl = gr.Interface(
-    fn=predict_from_text,
-    inputs=gr.Textbox(label="Describe your profile (e.g., 'I earn 5LPA, 25 years old, 2 loans, no co-signer...')"),
-    outputs=[
-        gr.Textbox(label="Extracted Feature Mapping"),
-        gr.Textbox(label="Prediction"),
-        gr.Textbox(label="Probability"),
-        gr.Textbox(label="Risk Segment"),
-        gr.Textbox(label="Recommendations"),
-        gr.Plot(label="Your Position in Risk Cluster Space")
-    ],
-    title="Loan Default Prediction (Natural Language)",
-    description="Describe your profile in natural language to get a prediction and see where you fall among risk clusters."
-)
-iface = gr.TabbedInterface([iface_structured, iface_nl], ["Structured Input", "Natural Language Input"])
-iface.launch()
-# loan_page=iface
+    st.markdown('<div class="custom-header">🏦 Loan Default Prediction</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-subheader">Enter your details to get a loan default prediction, risk segment, and recommendations.</div>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="loan-card">', unsafe_allow_html=True)
+        with st.form("loan_form"):
+            st.markdown("<h4 style='color:#43a047;'>Structured Input</h4>", unsafe_allow_html=True)
+            credit_score = st.number_input("Credit Score", min_value=0, max_value=1000, value=650, help="Your credit score (0-1000)")
+            dti_ratio = st.number_input("DTI Ratio", min_value=0.0, max_value=2.0, value=0.3, step=0.01, help="Debt-to-Income Ratio (0.0-2.0)")
+            income = st.number_input("Income", min_value=0.0, value=500000.0, step=1000.0, help="Annual income in INR")
+            loan_amount = st.number_input("Loan Amount", min_value=0.0, value=100000.0, step=1000.0, help="Requested loan amount in INR")
+            submitted = st.form_submit_button("🔍 Predict", use_container_width=True)
+        if submitted:
+            prediction, probability, risk_segment, recommendations = predict_loan_default(
+                credit_score, dti_ratio, income, loan_amount
+            )
+            st.subheader(":orange[Prediction Result]")
+            st.success(prediction)
+            st.info(probability)
+            st.warning(risk_segment)
+            st.markdown(f"<div class='recommend-box'><b>Recommendations:</b><br>{recommendations.replace(chr(10),'<br>')}</div>", unsafe_allow_html=True)
+            user_input = [credit_score, dti_ratio, income, loan_amount]
+            fig = plot_user_cluster_pca(X_cluster, kmeans, user_input, scaler, pca)
+            st.pyplot(fig)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown('<div class="custom-header" style="color:#ff9800;">📝 Natural Language Input</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-subheader">Describe your profile in your own words.</div>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="loan-card">', unsafe_allow_html=True)
+        profile_text = st.text_area("Describe your profile (e.g., 'I earn 5LPA, 25 years old, 2 loans, no co-signer...')", height=100)
+        big_col1, big_col2 = st.columns([2, 5])
+        with big_col1:
+            predict_nl = st.button("✨ Predict from Text", key="predict_nl_btn", use_container_width=True)
+        if predict_nl:
+            refined_text = refine_paragraph_with_gemini(profile_text)
+            features = extract_features_from_text(refined_text)
+            mapped_features_str = "\n".join(f"{k}: {v}" for k, v in features.items())
+            st.write(":orange[Extracted Features:]")
+            st.code(mapped_features_str, language="yaml")
+            prediction, probability, risk_segment, recommendations = predict_loan_default(
+                features["CreditScore"], features["DTIRatio"], features["Income"], features["LoanAmount"]
+            )
+            st.subheader(":orange[Prediction Result]")
+            st.success(prediction)
+            st.info(probability)
+            st.warning(risk_segment)
+            st.markdown(f"<div class='recommend-box recommend-box-orange'><b>Recommendations:</b><br>{recommendations.replace(chr(10),'<br>')}</div>", unsafe_allow_html=True)
+            user_input = [features["CreditScore"], features["DTIRatio"], features["Income"], features["LoanAmount"]]
+            fig = plot_user_cluster_pca(X_cluster, kmeans, user_input, scaler, pca)
+            st.pyplot(fig)
+        st.markdown('</div>', unsafe_allow_html=True)

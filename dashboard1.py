@@ -2,11 +2,11 @@
 LoanID,Age,Income,LoanAmount,CreditScore,MonthsEmployed,NumCreditLines,InterestRate,LoanTerm,DTIRatio,Education,EmploymentType,MaritalStatus,HasMortgage,HasDependents,LoanPurpose,HasCoSigner,Default
 I38PQUQS96,56,85994,50587,520,80,4,15.23,36,0.44,Bachelor's,Full-time,Divorced,Yes,Yes,Other,Yes,0
 HPSK72WA7R,69,50432,124440,458,15,1,4.81,60,0.68,Master's,Full-time,Married,No,No,Other,Yes,0"""
-import gradio as gr
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import streamlit as st
 
 # Load your dataset
 data = pd.read_csv("loan_data.csv")
@@ -75,126 +75,179 @@ def generate_pie_charts():
     
     return pie_charts, value_counts
 
-# Create Gradio app with Blocks instead of Interface
-with gr.Blocks(title="Loan Data Analysis Dashboard", theme=gr.themes.Soft()) as dashboard:
-    gr.Markdown("""
-    # Loan Data Analysis Dashboard
-    
-    This dashboard provides comprehensive analysis of loan data, including correlations, 
-    statistical summaries, and visualizations of both numerical and categorical variables.
-    """)
-    
-    # Correlation Heatmap
-    gr.Markdown("## Correlation Heatmap")
-    heatmap_plot = gr.Plot()
-    
-    # Statistics Overview
-    gr.Markdown("## Numerical Statistics Overview")
-    stats_df = gr.DataFrame()
-    
-    # Histograms and Statistics for each numerical variable
-    gr.Markdown("## Numerical Variables Analysis")
-    
-    # Dictionary to store all histogram and stat components
-    histogram_components = {}
-    stat_components = {}
-    
-    # Create components for each numerical column
-    for column in numerical_columns:
-        with gr.Accordion(f"Analysis for {column}", open=False):
-            with gr.Row():
-                histogram_components[column] = gr.Plot(label=f"Histogram for {column}")
-                # Use HTML for more aesthetic statistics display
-                stat_components[column] = gr.HTML(label=f"Statistics for {column}")
-    
-    # Categorical Variables Analysis
-    gr.Markdown("## Categorical Variables Analysis")
-    
-    # Dictionary to store all pie chart and count components
-    pie_components = {}
-    count_components = {}
-    
-    # Create components for each categorical column
-    for column in categorical_columns:
-        with gr.Accordion(f"Analysis for {column}", open=False):
-            with gr.Row():
-                pie_components[column] = gr.Plot(label=f"Distribution of {column}")
-                # Use HTML for displaying counts in a nicer format
-                count_components[column] = gr.HTML(label=f"Counts for {column}")
-    
-    # Function to populate the dashboard
-    def populate_dashboard():
-        heatmap = generate_heatmap()
-        stats = calculate_statistics()
-        histograms = generate_histograms()
-        pie_charts, value_counts = generate_pie_charts()
-        
-        # Format statistics for each numerical variable with HTML styling
-        formatted_stats = {}
-        for column in numerical_columns:
-            formatted_stats[column] = f"""
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #3498db;">
-                <h3 style="color: #2c3e50; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;">{column} Statistics</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="padding: 10px; font-weight: bold; color: #555;">Range:</td><td style="padding: 10px;">{data[column].min()} - {data[column].max()}</td></tr>
-                    <tr style="background-color: #f1f1f1;"><td style="padding: 10px; font-weight: bold; color: #555;">Mean:</td><td style="padding: 10px;">{round(data[column].mean(), 2)}</td></tr>
-                    <tr><td style="padding: 10px; font-weight: bold; color: #555;">Median:</td><td style="padding: 10px;">{round(data[column].median(), 2)}</td></tr>
-                    <tr style="background-color: #f1f1f1;"><td style="padding: 10px; font-weight: bold; color: #555;">Mode:</td><td style="padding: 10px;">{data[column].mode().values[0] if not data[column].mode().empty else "N/A"}</td></tr>
-                </table>
-            </div>
-            """
-        
-        # Format counts for each categorical variable with HTML styling
-        formatted_counts = {}
-        for column in categorical_columns:
-            count_html = "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #2ecc71;'>"
-            count_html += f"<h3 style='color: #2c3e50; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;'>{column} Value Counts</h3>"
-            count_html += "<table style='width: 100%; border-collapse: collapse;'>"
-            
-            counts = value_counts[column]
-            total = sum(counts.values())
-            
-            for i, (value, count) in enumerate(counts.items()):
-                percentage = (count / total) * 100
-                bg_color = "#f1f1f1" if i % 2 == 1 else ""
-                count_html += f"<tr style='background-color: {bg_color};'>"
-                count_html += f"<td style='padding: 10px; font-weight: bold; color: #555;'>{value}:</td>"
-                count_html += f"<td style='padding: 10px;'>{count} ({percentage:.1f}%)</td>"
-                count_html += "</tr>"
-            
-            count_html += "</table></div>"
-            formatted_counts[column] = count_html
-        
-        # Prepare all outputs in the correct order
-        outputs = [heatmap, stats]
-        
-        # Add numerical variable outputs
-        for column in numerical_columns:
-            outputs.append(histograms[column])
-            outputs.append(formatted_stats[column])
-        
-        # Add categorical variable outputs
-        for column in categorical_columns:
-            outputs.append(pie_charts[column])
-            outputs.append(formatted_counts[column])
-        
-        return outputs
-    
-    # Collect all components in the order they will receive values
-    all_components = [heatmap_plot, stats_df]
-    
-    # Add numerical variable components
-    for column in numerical_columns:
-        all_components.append(histogram_components[column])
-        all_components.append(stat_components[column])
-    
-    # Add categorical variable components
-    for column in categorical_columns:
-        all_components.append(pie_components[column])
-        all_components.append(count_components[column])
-    
-    # Populate dashboard on load
-    dashboard.load(populate_dashboard, [], all_components)
+# Streamlit UI function
+def streamlit_dashboard():
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@400;500&display=swap');
+        html, body, .main, .stApp {
+            font-family: 'Roboto', sans-serif !important;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+            color: #222 !important;
+        }
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            z-index: 9999;
+            background: #fff;
+            box-shadow: 0 2px 16px #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0.5em 2em;
+            height: 64px;
+        }
+        .nav-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            margin-right: 1.2em;
+            box-shadow: 0 0 8px #e0e0e0;
+        }
+        .nav-link {
+            color: #1b5e20 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-right: 2.2em;
+            text-decoration: none;
+            transition: color 0.2s, border-bottom 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover {
+            color: #ff9800 !important;
+            border-bottom: 2px solid #ff9800;
+        }
+        .nav-active {
+            color: #ff9800 !important;
+            border-bottom: 2px solid #ff9800;
+        }
+        .stApp { padding-top: 80px !important; }
+        .custom-header {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #1b5e20;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5em;
+        }
+        .custom-subheader {
+            font-size: 1.15rem;
+            color: #ff9800;
+            font-weight: 600;
+            margin-bottom: 1em;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        .dashboard-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 0 16px #e0e0e0;
+            border-radius: 18px;
+            padding: 2em 2em 1.5em 2em;
+            margin-bottom: 2em;
+            color: #222;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stButton>button, .stDownloadButton>button {
+            background: linear-gradient(90deg, #43a047 0%, #ff9800 100%);
+            color: #fff !important;
+            font-size: 1.1rem !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: bold !important;
+            border-radius: 12px !important;
+            padding: 0.9em 2.2em !important;
+            margin: 1em 0 1em 0 !important;
+            box-shadow: 0 0 12px #ff980044;
+            border: none !important;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .stButton>button:hover, .stDownloadButton>button:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 24px #43a04744, 0 8px 32px #ff980044;
+        }
+        .stTextInput>div>div>input, .stNumberInput>div>div>input {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1.5px solid #43a047;
+            color: #222 !important;
+            font-size: 1.1rem;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stTextArea>div>textarea {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1.5px solid #ff9800;
+            color: #222 !important;
+            font-size: 1.1rem;
+            font-family: 'Roboto', sans-serif !important;
+        }
+        .stMarkdown, .stTitle, .stSubheader {
+            color: #1b5e20;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        .stPlotlyChart, .stPyplot {
+            background: #fff !important;
+            border-radius: 16px;
+            box-shadow: 0 0 16px #e0e0e0;
+            padding: 1.7em;
+        }
+        .dashboard-expander .streamlit-expanderHeader {
+            color: #43a047 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 1.1rem;
+        }
+        .branding-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 1em;
+            box-shadow: 0 0 8px #e0e0e0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    st.markdown('''
+        <div class="top-navbar">
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="nav-logo" alt="Loan Brand Logo">
+            <a class="nav-link" href="/" target="_self">Home</a>
+            <a class="nav-link" href="/loan" target="_self">Loan Prediction</a>
+            <a class="nav-link nav-active" href="#" target="_self">Dashboard</a>
+        </div>
+    ''', unsafe_allow_html=True)
+    st.markdown('<div class="custom-header">📊 Loan Analytics Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-subheader">Explore loan data, risk segments, and trends with interactive analytics.</div>', unsafe_allow_html=True)
 
-# Launch the dashboard
-# dashboard.launch()
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    st.header(":blue[Correlation Heatmap]")
+    heatmap = generate_heatmap()
+    st.pyplot(heatmap)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    st.header(":blue[Numerical Statistics Overview]")
+    stats = calculate_statistics()
+    st.dataframe(stats, use_container_width=True, hide_index=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    st.header(":blue[Numerical Variables Analysis]")
+    histograms = generate_histograms()
+    for column, fig in histograms.items():
+        with st.expander(f"📊 Histogram for {column}"):
+            st.pyplot(fig)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    st.header(":orange[Categorical Variables Analysis]")
+    pie_charts, value_counts = generate_pie_charts()
+    for column, fig in pie_charts.items():
+        with st.expander(f"🧩 Distribution of {column}"):
+            st.pyplot(fig)
+            st.markdown("**Counts:**")
+            counts = value_counts[column]
+            for k, v in counts.items():
+                st.write(f"{k}: {v}")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Uncomment the following line to run the Streamlit app
+# streamlit_dashboard()
